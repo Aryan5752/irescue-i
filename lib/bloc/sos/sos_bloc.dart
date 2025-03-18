@@ -2,24 +2,22 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../models/sos_request.dart';
-import '../../../services/database_service.dart';
-import '../../../services/location_service.dart';
-import '../../../services/connectivity_service.dart';
+import 'package:irescue/models/sos_request.dart';
+import 'package:irescue/services/connectivity_service.dart';
+import 'package:irescue/services/database_service.dart';
+import 'package:irescue/services/location_service.dart';
 part 'sos_event.dart';
 part 'sos_state.dart';
 
 class SosBloc extends Bloc<SosEvent, SosState> {
   final DatabaseService _databaseService;
-  // final LocationService _locationService;
+  final LocationService _locationService = LocationService();
   final ConnectivityService _connectivityService;
 
   SosBloc({
     required DatabaseService databaseService,
-    // required LocationService locationService,
     required ConnectivityService connectivityService,
   })  : _databaseService = databaseService,
-        // _locationService = locationService,
         _connectivityService = connectivityService,
         super(SosInitial()) {
     on<SosSendRequest>(_onSosSendRequest);
@@ -36,7 +34,7 @@ class SosBloc extends Bloc<SosEvent, SosState> {
       emit(SosLoading());
       
       // Get current location
-      // final Position position = await _locationService.getCurrentPosition();
+      final Position position = await _locationService.getCurrentPosition();
       
       // Create SOS request
       final SosRequest request = SosRequest(
@@ -45,8 +43,8 @@ class SosBloc extends Bloc<SosEvent, SosState> {
         userName: event.userName,
         type: event.type,
         description: event.description,
-        latitude: 00.0000, // position.latitude,
-        longitude: 00.0000, // position.longitude,
+        latitude: position.latitude,
+        longitude: position.longitude,
         timestamp: DateTime.now(),
         status: 'pending',
         photoUrls: event.photoUrls ?? [],
@@ -70,10 +68,6 @@ class SosBloc extends Bloc<SosEvent, SosState> {
           'documentId': request.id,
           'data': request.toMap(),
         });
-        
-        // Also save locally for immediate feedback
-        // This would typically use a local database like Hive or SQLite
-        // For simplicity in this demo, we're not implementing full local storage
       }
       
       emit(SosSuccess(request: request));

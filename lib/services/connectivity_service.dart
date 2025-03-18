@@ -1,39 +1,35 @@
-// connectivity_service.dart
+// lib/services/connectivity_service.dart
+
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:irescue/utils/offline_queue.dart';
 
-class ConnectivityService {
-  final Connectivity _connectivity = Connectivity();
-  final OfflineQueue _offlineQueue;
+/// Interface for connectivity services.
+/// 
+/// This abstract class defines the contract that both real and mock
+/// implementations must fulfill.
+abstract class ConnectivityService {
+  /// A stream of connectivity status updates.
+  /// 
+  /// This stream emits [ConnectivityResult] values when connectivity changes.
+  Stream<ConnectivityResult> get connectivityStream;
   
-  ConnectivityService({required OfflineQueue offlineQueue}) 
-      : _offlineQueue = offlineQueue;
-
-  // Stream of connectivity changes
-  Stream<ConnectivityResult> get connectivityStream => 
-      _connectivity.onConnectivityChanged;
-
-  // Check current connectivity status
-  Future<ConnectivityResult> checkConnectivity() async {
-    return await _connectivity.checkConnectivity();
-  }
-
-  // Check if device is currently connected
-  Future<bool> isConnected() async {
-    final result = await checkConnectivity();
-    return result != ConnectivityResult.none;
-  }
-
-  // Process any operations that were queued while offline
-  Future<void> processOfflineQueue() async {
-    if (await isConnected()) {
-      await _offlineQueue.processQueue();
-    }
-  }
-
-  // Add an operation to the offline queue
-  Future<void> addToOfflineQueue(Map<String, dynamic> operation) async {
-    await _offlineQueue.addOperation(operation);
-  }
+  /// Checks the current connectivity status.
+  /// 
+  /// Returns a [ConnectivityResult] indicating the current network status.
+  Future<ConnectivityResult> checkConnectivity();
+  
+  /// Checks if the device is currently connected to the internet.
+  /// 
+  /// Returns true if the device has an active internet connection.
+  Future<bool> isConnected();
+  
+  /// Processes any operations that were queued while offline.
+  /// 
+  /// This is called when connectivity is restored to sync pending operations.
+  Future<void> processOfflineQueue();
+  
+  /// Adds an operation to the offline queue for processing when connectivity is restored.
+  /// 
+  /// [operation] is a map containing the operation details.
+  Future<void> addToOfflineQueue(Map<String, dynamic> operation);
 }

@@ -2,10 +2,10 @@
 import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../models/alert.dart';
-import '../../../services/database_service.dart';
-import '../../../services/location_service.dart';
-import '../../../services/connectivity_service.dart';
+import 'package:irescue/models/alert.dart';
+import 'package:irescue/services/connectivity_service.dart';
+import 'package:irescue/services/database_service.dart';
+import 'package:irescue/services/location_service.dart';
 
 part 'alert_event.dart';
 part 'alert_state.dart';
@@ -13,16 +13,14 @@ part 'alert_state.dart';
 
 class AlertBloc extends Bloc<AlertEvent, AlertState> {
   final DatabaseService _databaseService;
-  // final LocationService _locationService;
+  final LocationService _locationService = LocationService();
   final ConnectivityService _connectivityService;
   StreamSubscription? _alertsSubscription;
 
   AlertBloc({
     required DatabaseService databaseService,
-    // required LocationService locationService,
     required ConnectivityService connectivityService,
   })  : _databaseService = databaseService,
-        // _locationService = locationService,
         _connectivityService = connectivityService,
         super(const AlertInitial()) {
     on<AlertsStarted>(_onAlertsStarted);
@@ -57,7 +55,7 @@ class AlertBloc extends Bloc<AlertEvent, AlertState> {
       } else {
         // For civilians, we need to filter alerts by location
         // First get user's location
-        // final position = await _locationService.getCurrentPosition();
+        final position = await _locationService.getCurrentPosition();
         
         // Then listen to alerts and filter by radius
         _alertsSubscription = _databaseService
@@ -70,15 +68,15 @@ class AlertBloc extends Bloc<AlertEvent, AlertState> {
           // Filter alerts by location and radius
           final relevantAlerts = allAlerts.where((alert) {
             // Calculate distance between user and alert
-            // final distance = _locationService.calculateDistance(
-            //   00.000000, // position.latitude,
-            //   00.000000, // position.longitude,
-            //   alert.latitude, 
-            //   alert.longitude,
-            // );
+            final distance = _locationService.calculateDistance(
+              position.latitude,
+              position.longitude,
+              alert.latitude, 
+              alert.longitude,
+            );
             
             // Check if user is within alert radius
-            return true;
+            return distance <= alert.radius;
           }).toList();
           
           add(AlertsUpdated(alerts: relevantAlerts));

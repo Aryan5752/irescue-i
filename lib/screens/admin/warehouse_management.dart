@@ -13,9 +13,9 @@ class WarehouseManagementScreen extends StatefulWidget {
   final User currentUser;
 
   const WarehouseManagementScreen({
-    Key? key,
+    super.key,
     required this.currentUser,
-  }) : super(key: key);
+  });
 
   @override
   State<WarehouseManagementScreen> createState() => _WarehouseManagementScreenState();
@@ -563,12 +563,11 @@ class _WarehouseManagementScreenState extends State<WarehouseManagementScreen> {
                   label: const Text('Get Current Location'),
                   onPressed: () async {
                     try {
-                      // final LocationService locationService = LocationService();
-                      // final position = await locationService.getCurrentPosition();
+                      final LocationService locationService = LocationService();
+                      final position = await locationService.getCurrentPosition();
                       
-                      latitudeController.text = "00.0000"; // position.latitude.toString();
-                      longitudeController.text = "00.0000"; // position.longitude.toString();
-                      // longitudeController.text = position.longitude.toString();
+                      latitudeController.text = position.latitude.toString();
+                      longitudeController.text = position.longitude.toString();
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -745,11 +744,11 @@ class _WarehouseManagementScreenState extends State<WarehouseManagementScreen> {
                       label: const Text('Get Current Location'),
                       onPressed: () async {
                         try {
-                          // final LocationService locationService = LocationService();
-                          // final position = await locationService.getCurrentPosition();
+                          final LocationService locationService = LocationService();
+                          final position = await locationService.getCurrentPosition();
                           
-                          latitudeController.text = "00.0000"; // position.latitude.toString();
-                          longitudeController.text = "00.0000"; // position.longitude.toString();
+                          latitudeController.text = position.latitude.toString();
+                          longitudeController.text = position.longitude.toString();
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

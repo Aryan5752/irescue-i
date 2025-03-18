@@ -1,45 +1,49 @@
-// main.dart
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:irescue/firebase_options.dart';
-import 'package:irescue/utils/offline_queue.dart';
-import 'package:provider/provider.dart';
-
+import 'package:irescue/mocks/mock_service_locatior.dart';
 import 'config/routes.dart';
 import 'config/themes.dart';
-
-import 'models/user.dart';
-
 import 'services/auth_service.dart';
 import 'services/database_service.dart';
 import 'services/location_service.dart';
-import 'services/notification_service.dart';
 import 'services/connectivity_service.dart';
+import 'utils/offline_queue.dart';
 import 'bloc/auth/auth_bloc.dart';
 import 'bloc/alert/alert_bloc.dart';
 import 'bloc/sos/sos_bloc.dart';
 import 'bloc/connectivity/connectivity_bloc.dart';
 import 'bloc/warehouse/warehouse_bloc.dart';
-
 import 'screens/auth/login_screen.dart';
 import 'screens/civilian/civilian_home_screen.dart';
 import 'screens/admin/admin_dashboard.dart';
+import 'models/user.dart';
+
+// Global variable for demo mode
+bool isDemoMode = true;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase
- await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-);
-  
-  // // Initialize services
-  // final locationService = LocationService();
-  // await locationService.initialize();
-  
-  // final notificationService = NotificationService();
-  // await notificationService.initialize();
+  if (isDemoMode) {
+    // Initialize mock services for demo/hackathon mode
+    await serviceLocator.initialize();
+    
+    // Log demo credentials for easy reference
+    debugPrint('');
+    debugPrint('======= DEMO CREDENTIALS =======');
+    debugPrint('Admin: admin@test.com / password');
+    debugPrint('User: user@test.com / password');
+    debugPrint('================================');
+    debugPrint('');
+  } else {
+    // Initialize Firebase for real production mode
+    // This would be your original Firebase initialization code
+    // await Firebase.initializeApp(
+    //   options: DefaultFirebaseOptions.currentPlatform,
+    // );
+    throw UnimplementedError('Production mode is not available in hackathon demo');
+  }
   
   runApp(const MyApp());
 }
@@ -53,26 +57,19 @@ class MyApp extends StatelessWidget {
       providers: [
         // Services
         RepositoryProvider<AuthService>(
-          create: (context) => AuthService(),
+          create: (context) => serviceLocator.authService,
         ),
         RepositoryProvider<DatabaseService>(
-          create: (context) => DatabaseService(),
+          create: (context) => serviceLocator.databaseService,
         ),
-        // RepositoryProvider<LocationService>(
-        //   create: (context) => LocationService(),
-        // ),
-        // RepositoryProvider<NotificationService>(
-        //   create: (context) => NotificationService(),
-        // ),
-        RepositoryProvider<OfflineQueue>(
-          create: (context) => OfflineQueue(
-            databaseService: context.read<DatabaseService>(),
-          ),
+        RepositoryProvider<LocationService>(
+          create: (context) => serviceLocator.locationService,
         ),
         RepositoryProvider<ConnectivityService>(
-          create: (context) => ConnectivityService(
-            offlineQueue: context.read<OfflineQueue>(),
-          ),
+          create: (context) => serviceLocator.connectivityService,
+        ),
+        RepositoryProvider<OfflineQueue>(
+          create: (context) => serviceLocator.offlineQueue,
         ),
       ],
       child: MultiBlocProvider(
@@ -92,14 +89,12 @@ class MyApp extends StatelessWidget {
           BlocProvider<AlertBloc>(
             create: (context) => AlertBloc(
               databaseService: context.read<DatabaseService>(),
-              // locationService: context.read<LocationService>(),
               connectivityService: context.read<ConnectivityService>(),
             ),
           ),
           BlocProvider<SosBloc>(
             create: (context) => SosBloc(
               databaseService: context.read<DatabaseService>(),
-              // locationService: context.read<LocationService>(),
               connectivityService: context.read<ConnectivityService>(),
             ),
           ),
@@ -115,7 +110,7 @@ class MyApp extends StatelessWidget {
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
           themeMode: ThemeMode.system,
-          // Set home to AuthGate for authentication flow
+          debugShowCheckedModeBanner: false,
           home: const AuthGate(),
           routes: AppRoutes.routes,
         ),

@@ -24,11 +24,11 @@ bool isDemoMode = true;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   if (isDemoMode) {
     // Initialize mock services for demo/hackathon mode
     await serviceLocator.initialize();
-    
+
     // Log demo credentials for easy reference
     debugPrint('');
     debugPrint('======= DEMO CREDENTIALS =======');
@@ -42,9 +42,11 @@ void main() async {
     // await Firebase.initializeApp(
     //   options: DefaultFirebaseOptions.currentPlatform,
     // );
-    throw UnimplementedError('Production mode is not available in hackathon demo');
+    throw UnimplementedError(
+      'Production mode is not available in hackathon demo',
+    );
   }
-  
+
   runApp(const MyApp());
 }
 
@@ -76,33 +78,40 @@ class MyApp extends StatelessWidget {
         providers: [
           // BLoCs
           BlocProvider<AuthBloc>(
-            create: (context) => AuthBloc(
-              authService: context.read<AuthService>(),
-              databaseService: context.read<DatabaseService>(),
-            )..add(const AuthStarted()),
+            create:
+                (context) => AuthBloc(
+                  authService: context.read<AuthService>(),
+                  databaseService: context.read<DatabaseService>(),
+                )..add(const AuthStarted()),
           ),
           BlocProvider<ConnectivityBloc>(
-            create: (context) => ConnectivityBloc(
-              connectivityService: context.read<ConnectivityService>(),
-            )..add(const ConnectivityStarted()),
+            create:
+                (context) => ConnectivityBloc(
+                  connectivityService: context.read<ConnectivityService>(),
+                )..add(const ConnectivityStarted()),
           ),
           BlocProvider<AlertBloc>(
-            create: (context) => AlertBloc(
-              databaseService: context.read<DatabaseService>(),
-              connectivityService: context.read<ConnectivityService>(),
-            ),
+            create:
+                (context) => AlertBloc(
+                  locationService: context.read<LocationService>(),
+                  databaseService: context.read<DatabaseService>(),
+                  connectivityService: context.read<ConnectivityService>(),
+                ),
           ),
           BlocProvider<SosBloc>(
-            create: (context) => SosBloc(
-              databaseService: context.read<DatabaseService>(),
-              connectivityService: context.read<ConnectivityService>(),
-            ),
+            create:
+                (context) => SosBloc(
+                  databaseService: context.read<DatabaseService>(),
+                  connectivityService: context.read<ConnectivityService>(),
+                  locationService: context.read<LocationService>(),
+                ),
           ),
           BlocProvider<WarehouseBloc>(
-            create: (context) => WarehouseBloc(
-              databaseService: context.read<DatabaseService>(),
-              connectivityService: context.read<ConnectivityService>(),
-            ),
+            create:
+                (context) => WarehouseBloc(
+                  databaseService: context.read<DatabaseService>(),
+                  connectivityService: context.read<ConnectivityService>(),
+                ),
           ),
         ],
         child: MaterialApp(
@@ -127,20 +136,19 @@ class AuthGate extends StatelessWidget {
     return BlocBuilder<ConnectivityBloc, ConnectivityState>(
       builder: (context, connectivityState) {
         // Show connectivity banner if offline
-        
+
         return BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
             if (state is AuthLoading) {
               return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                body: Center(child: CircularProgressIndicator()),
               );
             } else if (state is AuthAuthenticated) {
               // Route based on user role
               final User currentUser = state.user;
-              
-              if (currentUser.role == 'admin' || currentUser.role == 'government') {
+
+              if (currentUser.role == 'admin' ||
+                  currentUser.role == 'government') {
                 return AdminDashboard(currentUser: currentUser);
               } else {
                 return CivilianHomeScreen(currentUser: currentUser);

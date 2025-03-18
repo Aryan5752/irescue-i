@@ -26,36 +26,34 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthProfileUpdateRequested>(_onAuthProfileUpdateRequested);
     on<AuthPasswordChangeRequested>(_onAuthPasswordChangeRequested);
   }
-
-  Future<void> _onAuthStarted(
-    AuthStarted event,
-    Emitter<AuthState> emit,
-  ) async {
-    try {
-      emit(const AuthLoading());
+Future<void> _onAuthStarted(
+  AuthStarted event,
+  Emitter<AuthState> emit,
+) async {
+  try {
+    emit(const AuthLoading());
+    
+    // Check current authentication state
+    final currentUser = _authService.currentUser;
+    
+    if (currentUser != null) {
+      // User is logged in, get user data
+      final userData = await _authService.getUserData(currentUser); // Fixed line
       
-      // Check current authentication state
-      final currentUser = _authService.currentUser;
-      
-      if (currentUser != null) {
-        // User is logged in, get user data
-        final userData = await _authService.getUserData(currentUser.uid);
-        
-        if (userData != null) {
-          emit(AuthAuthenticated(user: userData));
-        } else {
-          // User exists in Firebase Auth but not in Firestore
-          emit(const AuthUnauthenticated());
-        }
+      if (userData != null) {
+        emit(AuthAuthenticated(user: userData));
       } else {
-        // No user is logged in
+        // User exists in Firebase Auth but not in Firestore
         emit(const AuthUnauthenticated());
       }
-    } catch (e) {
-      emit(AuthError(message: 'Authentication error: ${e.toString()}'));
+    } else {
+      // No user is logged in
+      emit(const AuthUnauthenticated());
     }
+  } catch (e) {
+    emit(AuthError(message: 'Authentication error: ${e.toString()}'));
   }
-
+}
   Future<void> _onAuthLoginRequested(
     AuthLoginRequested event,
     Emitter<AuthState> emit,
@@ -163,7 +161,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final currentUser = _authService.currentUser;
       
       if (currentUser != null) {
-        final userData = await _authService.getUserData(currentUser.uid);
+        final userData = await _authService.getUserData(currentUser);
         
         if (userData != null) {
           emit(AuthAuthenticated(user: userData));

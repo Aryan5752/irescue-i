@@ -1,17 +1,18 @@
-// lib/services/location_service.dart
+// Updated LocationService interface with the getLastKnownPosition method
 
-import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 
-/// Interface for location services.
-/// 
-/// This abstract class defines the contract that both real and mock
-/// implementations must fulfill.
 abstract class LocationService {
   /// Gets the current device position.
   /// 
   /// Returns a [Position] object with location data.
   Future<Position> getCurrentPosition();
+  
+  /// Gets the last known position of the device.
+  /// This is useful as a fallback when getCurrentPosition fails or times out.
+  /// 
+  /// Returns a [Position] object with location data.
+  Future<Position> getLastKnownPosition();
 
   /// Starts tracking the device location with periodic updates.
   /// 

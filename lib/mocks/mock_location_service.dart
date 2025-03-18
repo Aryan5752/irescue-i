@@ -1,7 +1,8 @@
-// lib/services/mock/mock_location_service.dart
+// Enhanced MockLocationService
 
 import 'dart:async';
 import 'dart:math';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:irescue/services/location_service.dart';
 
@@ -9,6 +10,9 @@ class MockLocationService implements LocationService {
   // Default location (San Francisco coordinates)
   double _latitude = 37.7749;
   double _longitude = -122.4194;
+  
+  // Store last known position
+  Position? _lastKnownPosition;
   
   // Stream controller for location updates
   final _locationController = StreamController<Position>.broadcast();
@@ -21,6 +25,20 @@ class MockLocationService implements LocationService {
     // Add small random variation to default location
     _latitude += (random.nextDouble() - 0.5) * 0.01;
     _longitude += (random.nextDouble() - 0.5) * 0.01;
+    
+    // Set initial last known position
+    _lastKnownPosition = Position(
+      longitude: _longitude,
+      latitude: _latitude,
+      timestamp: DateTime.now(),
+      accuracy: 4.0,
+      altitude: 0.0,
+      heading: 0.0,
+      speed: 0.0,
+      speedAccuracy: 0.0,
+      altitudeAccuracy: 0.0,
+      headingAccuracy: 0.0,
+    );
   }
   
   /// Reset to default location
@@ -36,20 +54,9 @@ class MockLocationService implements LocationService {
     final random = Random();
     _latitude += (random.nextDouble() - 0.5) * 0.01;
     _longitude += (random.nextDouble() - 0.5) * 0.01;
-  }
-  
-  /// Set a specific mock location
-  void setMockLocation(double latitude, double longitude) {
-    _latitude = latitude;
-    _longitude = longitude;
-  }
-  
-  @override
-  Future<Position> getCurrentPosition() async {
-    // Simulate delay
-    await Future.delayed(const Duration(milliseconds: 500));
     
-    return Position(
+    // Update last known position
+    _lastKnownPosition = Position(
       longitude: _longitude,
       latitude: _latitude,
       timestamp: DateTime.now(),
@@ -62,6 +69,82 @@ class MockLocationService implements LocationService {
       headingAccuracy: 0.0,
     );
   }
+  
+  /// Set a specific mock location
+  void setMockLocation(double latitude, double longitude) {
+    _latitude = latitude;
+    _longitude = longitude;
+    
+    // Update last known position
+    _lastKnownPosition = Position(
+      longitude: _longitude,
+      latitude: _latitude,
+      timestamp: DateTime.now(),
+      accuracy: 4.0,
+      altitude: 0.0,
+      heading: 0.0,
+      speed: 0.0,
+      speedAccuracy: 0.0,
+      altitudeAccuracy: 0.0,
+      headingAccuracy: 0.0,
+    );
+  }
+  
+  @override
+  Future<Position> getCurrentPosition() async {
+    // Simulate delay
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // 10% chance of simulating a location error for testing error handling
+    if (Random().nextDouble() < 0.1) {
+      throw Exception('Mock location error - simulated for testing');
+    }
+    
+    final position = Position(
+      longitude: _longitude,
+      latitude: _latitude,
+      timestamp: DateTime.now(),
+      accuracy: 4.0,
+      altitude: 0.0,
+      heading: 0.0,
+      speed: 0.0,
+      speedAccuracy: 0.0,
+      altitudeAccuracy: 0.0,
+      headingAccuracy: 0.0,
+    );
+    
+    // Store as last known position
+    _lastKnownPosition = position;
+    
+    return position;
+  }
+  
+  @override
+  Future<Position> getLastKnownPosition() async {
+    // Simulate delay
+    await Future.delayed(const Duration(milliseconds: 200));
+    
+    if (_lastKnownPosition != null) {
+      return _lastKnownPosition!;
+    }
+    
+    // If no last known position, create a new one
+    final position = Position(
+      longitude: _longitude,
+      latitude: _latitude,
+      timestamp: DateTime.now(),
+      accuracy: 10.0, // Less accurate than getCurrentPosition
+      altitude: 0.0,
+      heading: 0.0,
+      speed: 0.0,
+      speedAccuracy: 0.0,
+      altitudeAccuracy: 0.0,
+      headingAccuracy: 0.0,
+    );
+    
+    _lastKnownPosition = position;
+    return position;
+  }
 
   @override
   Stream<Position> startLocationTracking({int intervalInSeconds = 10}) {
@@ -73,9 +156,13 @@ class MockLocationService implements LocationService {
     
     // Emit current position immediately
     Future.microtask(() async {
-      final position = await getCurrentPosition();
-      if (!_locationController.isClosed) {
-        _locationController.add(position);
+      try {
+        final position = await getCurrentPosition();
+        if (!_locationController.isClosed) {
+          _locationController.add(position);
+        }
+      } catch (e) {
+        print('Error getting initial position for tracking: $e');
       }
     });
     
@@ -83,14 +170,32 @@ class MockLocationService implements LocationService {
     _locationTimer = Timer.periodic(
       Duration(seconds: intervalInSeconds),
       (_) async {
-        // Simulate small movement
-        final random = Random();
-        _latitude += (random.nextDouble() - 0.5) * 0.0005;
-        _longitude += (random.nextDouble() - 0.5) * 0.0005;
-        
-        final position = await getCurrentPosition();
-        if (!_locationController.isClosed) {
-          _locationController.add(position);
+        try {
+          // Simulate small movement
+          final random = Random();
+          _latitude += (random.nextDouble() - 0.5) * 0.0005;
+          _longitude += (random.nextDouble() - 0.5) * 0.0005;
+          
+          final position = Position(
+            longitude: _longitude,
+            latitude: _latitude,
+            timestamp: DateTime.now(),
+            accuracy: 4.0,
+            altitude: 0.0,
+            heading: 0.0,
+            speed: 0.0,
+            speedAccuracy: 0.0,
+            altitudeAccuracy: 0.0,
+            headingAccuracy: 0.0,
+          );
+          
+          _lastKnownPosition = position;
+          
+          if (!_locationController.isClosed) {
+            _locationController.add(position);
+          }
+        } catch (e) {
+          print('Error updating location during tracking: $e');
         }
       },
     );
@@ -177,6 +282,11 @@ class MockLocationService implements LocationService {
       location['distance'] = calculateDistance(
         latitude, longitude, locationLatitude, locationLongitude);
     }
+    
+    // Sort by distance (closest first)
+    nearbyLocations.sort((a, b) {
+      return (a['distance'] as double).compareTo(b['distance'] as double);
+    });
     
     return nearbyLocations;
   }

@@ -1,6 +1,7 @@
 // resource_allocation.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:irescue/widgets/resource_item.dart';
 import '../../models/user.dart';
 import '../../models/warehouse.dart';
 import '../../models/resource.dart';
@@ -260,56 +261,69 @@ class _ResourceAllocationScreenState extends State<ResourceAllocationScreen> {
   }
   
   // Build resources list
-  Widget _buildResourcesList(Warehouse warehouse) {
-    // Get filtered and sorted resources
-    List<Resource> resources = _getFilteredResources(warehouse.resources);
-    
-    if (resources.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.inventory_2,
-              size: 48,
-              color: Colors.grey,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _showLowStockOnly
-                  ? 'No low stock resources found'
-                  : _resourceFilter != 'All'
-                      ? 'No resources found for category: $_resourceFilter'
-                      : 'No resources available in this warehouse',
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                // Add new resource
-                _showAddResourceDialog(warehouse.id);
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Resource'),
-            ),
-          ],
-        ),
-      );
-    }
-    
-    // Sort resources
-    resources = _getSortedResources(resources);
-    
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80), // Bottom padding for FAB
-      itemCount: resources.length,
-      itemBuilder: (context, index) {
-        final resource = resources[index];
-        return _buildResourceCard(resource, warehouse.id);
-      },
+ Widget _buildResourcesList(Warehouse warehouse) {
+  // Get filtered and sorted resources
+  List<Resource> resources = _getFilteredResources(warehouse.resources);
+  
+  if (resources.isEmpty) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.inventory_2,
+            size: 48,
+            color: Colors.grey,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _showLowStockOnly
+                ? 'No low stock resources found'
+                : _resourceFilter != 'All'
+                    ? 'No resources found for category: $_resourceFilter'
+                    : 'No resources available in this warehouse',
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () {
+              // Add new resource
+              _showAddResourceDialog(warehouse.id);
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Resource'),
+          ),
+        ],
+      ),
     );
   }
   
-  // Get filtered resources
+  // Sort resources
+  resources = _getSortedResources(resources);
+  
+  return ListView.builder(
+    padding: const EdgeInsets.fromLTRB(16, 0, 16, 80), // Bottom padding for FAB
+    itemCount: resources.length,
+    itemBuilder: (context, index) {
+      final resource = resources[index];
+      return ResourceItem(
+        resource: resource,
+        warehouseId: warehouse.id,
+        onTap: () {
+          // Show resource details
+          _showResourceDetailsDialog(resource, warehouse.id);
+        },
+        onAllocate: () {
+          // Show allocate dialog
+          _showAllocateResourceDialog(resource, warehouse.id);
+        },
+        onEdit: () {
+          // Show edit dialog
+          _showEditResourceDialog(resource, warehouse.id);
+        },
+      );
+    },
+  );
+}// Get filtered resources
   List<Resource> _getFilteredResources(List<Resource> resources) {
     return resources.where((resource) {
       // Filter by category
@@ -357,174 +371,6 @@ class _ResourceAllocationScreenState extends State<ResourceAllocationScreen> {
   }
   
   // Build resource card
-  Widget _buildResourceCard(Resource resource, String warehouseId) {
-    // Check if stock is low
-    final isLowStock = resource.isLowStock;
-    
-    // Check if expired
-    final isExpired = resource.isExpired;
-    
-    // Get appropriate status color
-    Color statusColor;
-    if (isExpired) {
-      statusColor = Colors.red;
-    } else if (isLowStock) {
-      statusColor = Colors.orange;
-    } else {
-      statusColor = Colors.green;
-    }
-    
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: statusColor,
-          width: isLowStock || isExpired ? 1 : 0,
-        ),
-      ),
-      child: InkWell(
-        onTap: () {
-          // Show resource details
-          _showResourceDetailsDialog(resource, warehouseId);
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          resource.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Category: ${resource.category}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  StatusBadge.stock(
-                    resource.quantity,
-                    resource.minStockLevel,
-                    fontSize: 10,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Quantity
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Quantity',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        '${resource.quantity} ${resource.unit}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  // Min Stock Level
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Min Stock',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        '${resource.minStockLevel} ${resource.unit}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  // Expiry
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Expires',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        '${resource.expiryDate.day}/${resource.expiryDate.month}/${resource.expiryDate.year}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isExpired ? Colors.red : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Allocate button
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.send),
-                    label: const Text('Allocate'),
-                    onPressed: () {
-                      // Show allocate dialog
-                      _showAllocateResourceDialog(resource, warehouseId);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  
-                  // Edit button
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Edit'),
-                    onPressed: () {
-                      // Show edit dialog
-                      _showEditResourceDialog(resource, warehouseId);
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
   
   // Show filter dialog
   void _showFilterDialog() {

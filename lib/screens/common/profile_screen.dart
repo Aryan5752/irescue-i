@@ -60,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
     
     try {
-      final LocationService locationService = LocationService();
+      final LocationService locationService = context.read<LocationService>();
       final position = await locationService.getCurrentPosition();
       
       setState(() {

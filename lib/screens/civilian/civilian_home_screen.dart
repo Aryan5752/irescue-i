@@ -1,6 +1,9 @@
 // civilian_home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:irescue/widgets/empty_state.dart';
+import 'package:irescue/widgets/error_display.dart';
+import 'package:irescue/widgets/loading_indicatior.dart';
 import '../../models/user.dart';
 import '../../bloc/alert/alert_bloc.dart';
 import '../../bloc/connectivity/connectivity_bloc.dart';
@@ -170,8 +173,13 @@ class _CivilianHomeScreenState extends State<CivilianHomeScreen> {
   }
   
   // Build the home screen content
-  Widget _buildHomeScreen() {
-    return SingleChildScrollView(
+ Widget _buildHomeScreen() {
+  return RefreshIndicator(
+    onRefresh: () async {
+      // Reload alerts
+      context.read<AlertBloc>().add(const AlertsStarted(isAdmin: false));
+    },
+    child: SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // Extra bottom padding for SOS button
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,12 +201,15 @@ class _CivilianHomeScreenState extends State<CivilianHomeScreen> {
           ),
           const SizedBox(height: 8),
           
-          // Alerts list
+          // Alerts list with better error handling
           BlocBuilder<AlertBloc, AlertState>(
             builder: (context, state) {
               if (state is AlertLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
+                return SizedBox(
+                  height: 200,
+                  child: LoadingIndicator(
+                    message: 'Loading alerts...',
+                  ),
                 );
               } else if (state is AlertsLoaded) {
                 // Filter only active alerts
@@ -207,32 +218,15 @@ class _CivilianHomeScreenState extends State<CivilianHomeScreen> {
                     .toList();
                 
                 if (activeAlerts.isEmpty) {
-                  return const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                            size: 48,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'No active alerts in your area',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Stay safe and be prepared',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  return EmptyState(
+                    message: 'No active alerts in your area',
+                    icon: Icons.check_circle,
+                    onAction: () {
+                      context.read<AlertBloc>().add(
+                        const AlertsStarted(isAdmin: false),
+                      );
+                    },
+                    actionLabel: 'Refresh',
                   );
                 }
                 
@@ -301,34 +295,18 @@ class _CivilianHomeScreenState extends State<CivilianHomeScreen> {
                   ],
                 );
               } else if (state is AlertError) {
-                return Center(
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.red,
-                        size: 32,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Error: ${state.message}',
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          context.read<AlertBloc>().add(
-                                const AlertsStarted(isAdmin: false),
-                              );
-                        },
-                        child: const Text('Try Again'),
-                      ),
-                    ],
-                  ),
+                return ErrorDisplay(
+                  message: 'Error loading alerts: ${state.message}',
+                  onRetry: () {
+                    context.read<AlertBloc>().add(
+                      const AlertsStarted(isAdmin: false),
+                    );
+                  },
                 );
               } else {
-                return const Center(
-                  child: Text('No alerts available'),
+                return const EmptyState(
+                  message: 'No alerts available',
+                  icon: Icons.notifications_off,
                 );
               }
             },
@@ -477,10 +455,9 @@ class _CivilianHomeScreenState extends State<CivilianHomeScreen> {
           ),
         ],
       ),
-    );
-  }
-  
-  // Build resource card
+    ),
+  );
+} // Build resource card
   Widget _buildResourceCard({
     required IconData icon,
     required String title,

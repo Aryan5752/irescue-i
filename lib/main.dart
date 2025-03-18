@@ -18,7 +18,9 @@ import 'screens/auth/login_screen.dart';
 import 'screens/civilian/civilian_home_screen.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'models/user.dart';
+// working with the demo mode
 
+// jj
 // Global variable for demo mode
 bool isDemoMode = true;
 

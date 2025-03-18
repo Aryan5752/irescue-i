@@ -119,7 +119,7 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           title: 'Disaster Management',
           theme: AppThemes.lightTheme,
-          darkTheme: AppThemes.darkTheme,
+          darkTheme: AppThemes.lightTheme,
           themeMode: ThemeMode.system,
           debugShowCheckedModeBanner: false,
           home: const AuthGate(),

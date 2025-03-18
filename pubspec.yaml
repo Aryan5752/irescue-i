@@ -1,0 +1,39 @@
+name: irescue
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^2.13.0
+  firebase_auth: ^4.6.1
+  cloud_firestore: ^4.7.1
+  firebase_storage: ^11.2.1
+  flutter_bloc: ^8.1.2
+  provider: ^6.0.5
+  google_maps_flutter: ^2.2.8
+  geolocator: ^9.0.2
+  image_picker: ^0.8.7+5
+  intl: ^0.18.1
+  connectivity_plus: ^4.0.1
+  cached_network_image: ^3.2.3
+  url_launcher: ^6.1.11
+  shimmer: ^3.0.0
+  equatable:
+  firebase_messaging: 
+  shared_preferences: ^2.5.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+

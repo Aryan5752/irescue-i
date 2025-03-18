@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "675554995946",
+    "firebase_url": "https://irescue-hacka-default-rtdb.firebaseio.com",
+    "project_id": "irescue-hacka",
+    "storage_bucket": "irescue-hacka.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:675554995946:android:323b1469b6a2dcb127f193",
+        "android_client_info": {
+          "package_name": "com.example.irescue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClh4OMTF95YblRtU85N4c8gfNeZVs6rtw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
